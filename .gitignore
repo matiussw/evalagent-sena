@@ -28,11 +28,13 @@ htmlcov/
 *.pem
 *.key
 
-# === Modelos y binarios pesados (se descargan en setup) ===
+# === Modelos de IA y binarios pesados (se descargan en el setup) ===
+# Rutas concretas: un `models/` genérico se tragaría backend/app/models/
 *.onnx
 *.onnx.json
-piper/
-models/
+/piper/
+/voces/
+/modelos/
 *.bin
 *.gguf
 
@@ -55,3 +57,7 @@ Thumbs.db
 
 # === Código de práctica ajeno al proyecto ===
 test.py
+
+# === Entorno virtual de Python ===
+.venv/
+backend/.venv/

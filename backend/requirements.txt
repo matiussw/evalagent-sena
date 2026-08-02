@@ -1,6 +1,27 @@
+# --- Web ---
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
-httpx==0.27.2
 python-multipart==0.0.12
+websockets==13.1
+
+# --- Configuración ---
+pydantic==2.9.2
+pydantic-settings==2.5.2
+email-validator==2.2.0
+
+# --- Base de datos (T-001, ADR-002) ---
+sqlalchemy[asyncio]==2.0.35
+asyncpg==0.29.0
+alembic==1.13.3
+
+# --- Seguridad (T-003) ---
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.2.0
+
+# --- IA local (ADR-001) ---
+httpx==0.27.2
 faster-whisper==1.2.1
-# openai-whisper  # Uncomment as fallback if faster-whisper fails
+
+# Nota: Piper TTS no es un paquete de Python. Se instala como binario en la
+# imagen Docker junto con su modelo de voz. Ver ADR-005 y T-012.

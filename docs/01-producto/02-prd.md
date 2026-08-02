@@ -1,7 +1,7 @@
 # 02 — PRD · Documento de Requisitos de Producto
 
 > **EvalAgent SENA** — Plataforma SaaS de sustentación oral asistida por IA
-> Estado: `Aprobado` · Versión: `2.0` · Autor: Teo · Fecha: 2026-08-02
+> Estado: `Aprobado` · Versión: `2.0` · Autor: Teo (MAQ) · Fecha: 2026-08-02
 
 <!-- Estructura conforme a los componentes clave de un PRD definidos en el
      Módulo 5 del Máster AI4Devs (LIDR Academy), incluida su doble función:

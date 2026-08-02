@@ -91,6 +91,28 @@ Las tablas de trazabilidad están al final de
 
 ---
 
+## Convenciones de entrega
+
+Las exige el curso: **si la rama no lleva las iniciales, la entrega no se identifica.**
+Se anotan aquí porque el material del máster no forma parte de este repositorio.
+
+| Entrega | Rama | Contenido |
+|---|---|---|
+| 1 · Documentación técnica | `feature-entrega1-MAQ` | Producto, arquitectura, modelo de datos e historias |
+| 2 · Código funcional | `feature-entrega2-MAQ` | Backend, frontend y BD conectados, flujo principal casi completo |
+| Final | `finalproject-MAQ` | Versión desplegada, tests y documentación cerrada |
+
+- Cada entrega se envía por el [formulario de Typeform](https://lidr.typeform.com/proyectoai4devs)
+  incluyendo la URL del pull request.
+- El trabajo se hace **mediante pull requests**, cada uno con título claro, descripción de
+  qué cambia y por qué, y referencia a la historia o ticket correspondiente.
+- La rama final debe contener `readme.md` y `prompts.md` completos, el código funcional y
+  evidencia del despliegue.
+- Etiqueta de release recomendada: `v1.0-final-MAQ`.
+- Si el repositorio es privado, hay que dar acceso al TA.
+
+---
+
 ## Estado de la documentación
 
 | Documento | Estado | Versión |

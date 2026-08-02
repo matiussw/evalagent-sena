@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin · EvalAgent SENA</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f; --surface: #111318; --surface2: #181c22;
+    --border: #222730; --border-lit: #2e3540;
+    --green: #00e676; --green-dim: #00e67622; --green-mid: #00e67644;
+    --amber: #ffab00; --amber-dim: #ffab0022;
+    --red: #ff5252; --red-dim: #ff525222;
+    --text: #c8d4e0; --text-dim: #5a6678; --text-bright: #eef2f7;
+    --mono: 'IBM Plex Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 32px; border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .logo { font-family: var(--mono); font-size: 14px; color: var(--text-bright); font-weight: 500; }
+  .logo span { color: var(--green); }
+  .header-link { font-family: var(--mono); font-size: 11px; color: var(--text-dim); text-decoration: none; }
+  .header-link:hover { color: var(--green); }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+
+  h1 { font-family: var(--mono); font-size: 20px; color: var(--text-bright); margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: var(--text-dim); margin-bottom: 32px; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border-lit);
+    border-radius: 10px; padding: 20px 24px;
+  }
+  .stat-label { font-family: var(--mono); font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+  .stat-value { font-family: var(--mono); font-size: 28px; color: var(--text-bright); font-weight: 500; }
+  .stat-value.green { color: var(--green); }
+  .stat-value.red { color: var(--red); }
+  .stat-value.amber { color: var(--amber); }
+
+  .section-title {
+    font-family: var(--mono); font-size: 11px; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    font-family: var(--mono); font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--text-dim); text-align: left;
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: background 0.15s;
+  }
+  tbody tr:hover { background: var(--surface2); }
+  td { padding: 14px 16px; font-size: 13px; }
+  td.mono { font-family: var(--mono); font-size: 12px; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 20px;
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+  }
+  .badge.aprobado { background: var(--green-dim); border: 1px solid var(--green-mid); color: var(--green); }
+  .badge.reprobado { background: var(--red-dim); border: 1px solid #ff525244; color: var(--red); }
+
+  .score-bar-wrap { display: flex; align-items: center; gap: 10px; }
+  .score-bar { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .score-bar-fill { height: 100%; border-radius: 3px; }
+  .score-pct { font-family: var(--mono); font-size: 12px; min-width: 36px; text-align: right; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7); z-index: 200;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border-lit);
+    border-radius: 14px; width: 720px; max-height: 85vh;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .modal-header {
+    padding: 24px 28px 16px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+  .modal-title { font-family: var(--mono); font-size: 16px; color: var(--text-bright); }
+  .modal-meta { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+  .btn-close {
+    background: none; border: none; color: var(--text-dim);
+    font-size: 20px; cursor: pointer; padding: 0 4px;
+  }
+  .btn-close:hover { color: var(--text-bright); }
+  .modal-body { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; }
+
+  .criteria-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .criteria-row { display: flex; flex-direction: column; gap: 4px; }
+  .criteria-name { font-family: var(--mono); font-size: 10px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 0.08em; }
+  .criteria-score { display: flex; align-items: center; gap: 8px; }
+  .mini-bar { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .mini-bar-fill { height: 100%; border-radius: 2px; }
+  .criteria-val { font-family: var(--mono); font-size: 12px; min-width: 30px; }
+
+  .transcript { display: flex; flex-direction: column; gap: 8px; }
+  .t-entry { padding: 10px 14px; border-radius: 8px; font-size: 13px; line-height: 1.5; }
+  .t-entry.agent { background: var(--surface2); border-left: 2px solid var(--green); }
+  .t-entry.student { background: #0d1520; border-left: 2px solid #2a5080; }
+  .t-role { font-family: var(--mono); font-size: 9px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; }
+
+  .empty-state { text-align: center; padding: 80px 0; }
+  .empty-state p { font-family: var(--mono); font-size: 14px; color: var(--text-dim); }
+
+  .btn-refresh {
+    padding: 8px 16px; background: transparent; border: 1px solid var(--border-lit);
+    color: var(--text-dim); border-radius: 6px; font-family: var(--mono);
+    font-size: 11px; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-refresh:hover { border-color: var(--green); color: var(--green); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Eval<span>Agent</span> · <span style="color:var(--amber)">Admin</span></div>
+  <a href="/" class="header-link">← Volver a la app</a>
+</header>
+
+<main>
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+    <h1>Panel de Evaluaciones</h1>
+    <button class="btn-refresh" onclick="loadReports()">↻ Actualizar</button>
+  </div>
+  <p class="subtitle">Resultados de todas las sustentaciones realizadas</p>
+
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card"><div class="stat-label">Total evaluaciones</div><div class="stat-value" id="stat-total">—</div></div>
+    <div class="stat-card"><div class="stat-label">Aprobados</div><div class="stat-value green" id="stat-approved">—</div></div>
+    <div class="stat-card"><div class="stat-label">Reprobados</div><div class="stat-value red" id="stat-failed">—</div></div>
+    <div class="stat-card"><div class="stat-label">Promedio</div><div class="stat-value amber" id="stat-avg">—</div></div>
+  </div>
+
+  <div class="section-title">Historial de sustentaciones</div>
+
+  <div id="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Estudiante</th>
+          <th>Fecha</th>
+          <th>Duración</th>
+          <th>Preguntas</th>
+          <th>Puntaje</th>
+          <th>Resultado</th>
+        </tr>
+      </thead>
+      <tbody id="reports-body"></tbody>
+    </table>
+    <div class="empty-state" id="empty-state" style="display:none">
+      <p>No hay evaluaciones registradas aún.</p>
+    </div>
+  </div>
+</main>
+
+<!-- Modal detalle -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-title">—</div>
+        <div class="modal-meta" id="modal-meta">—</div>
+      </div>
+      <button class="btn-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const BACKEND = window.location.origin;
+let allReports = [];
+
+async function loadReports() {
+  try {
+    const res = await fetch(`${BACKEND}/api/admin/reports`);
+    const { reports } = await res.json();
+    allReports = reports;
+    renderStats(reports);
+    renderTable(reports);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function renderStats(reports) {
+  const total    = reports.length;
+  const approved = reports.filter(r => r.approved).length;
+  const failed   = total - approved;
+  const avg      = total ? Math.round(reports.reduce((s, r) => s + (r.percentage || 0), 0) / total) : 0;
+
+  document.getElementById('stat-total').textContent    = total;
+  document.getElementById('stat-approved').textContent = approved;
+  document.getElementById('stat-failed').textContent   = failed;
+  document.getElementById('stat-avg').textContent      = total ? `${avg}%` : '—';
+}
+
+function renderTable(reports) {
+  const tbody = document.getElementById('reports-body');
+  const empty = document.getElementById('empty-state');
+  tbody.innerHTML = '';
+
+  if (!reports.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  reports.forEach(r => {
+    const pct   = r.percentage ?? 0;
+    const color = pct >= 80 ? 'var(--green)' : pct >= 60 ? 'var(--amber)' : 'var(--red)';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong style="color:var(--text-bright)">${esc(r.student_name)}</strong></td>
+      <td class="mono">${esc(r.date)}</td>
+      <td class="mono">${esc(r.duration)}</td>
+      <td class="mono" style="text-align:center">${r.questions_answered ?? '—'}</td>
+      <td style="min-width:160px">
+        <div class="score-bar-wrap">
+          <div class="score-bar"><div class="score-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+          <span class="score-pct" style="color:${color}">${pct}%</span>
+        </div>
+      </td>
+      <td><span class="badge ${r.approved ? 'aprobado' : 'reprobado'}">${r.approved ? '✓ Aprobado' : '✗ Reprobado'}</span></td>
+    `;
+    tr.onclick = () => openModal(r.id);
+    tbody.appendChild(tr);
+  });
+}
+
+async function openModal(id) {
+  try {
+    const res  = await fetch(`${BACKEND}/api/admin/reports/${id}`);
+    const data = await res.json();
+    showModal(data);
+  } catch (e) { console.error(e); }
+}
+
+function showModal(data) {
+  document.getElementById('modal-title').textContent = data.student_name;
+  document.getElementById('modal-meta').textContent  =
+    `${data.date} · ${data.duration} · ${data.questions_answered} preguntas · ${data.project_type || 'Proyecto'}`;
+
+  const pct    = data.percentage ?? 0;
+  const color  = pct >= 80 ? 'var(--green)' : pct >= 60 ? 'var(--amber)' : 'var(--red)';
+  const scores = data.scores || {};
+
+  // Usa las etiquetas guardadas en el reporte, o fallback a las claves
+  const criteriaLabels = data.criteria_labels || {};
+  const labelMap = {
+    endpoints:     'Endpoints',
+    errores:       'Manejo de errores',
+    diseno:        'Diseño',
+    seguridad:     'Seguridad',
+    explicacion:   'Explicación',
+    variables:     'Variables y tipos',
+    condicionales: 'Condicionales',
+    ciclos:        'Ciclos',
+    funciones:     'Funciones',
+  };
+
+  const criteriaHTML = Object.entries(scores).map(([k, val]) => {
+    const label = labelMap[k] || criteriaLabels[k] || k;
+    const c = val >= 8 ? 'var(--green)' : val >= 6 ? 'var(--amber)' : 'var(--red)';
+    return `
+      <div class="criteria-row">
+        <div class="criteria-name">${label}</div>
+        <div class="criteria-score">
+          <div class="mini-bar"><div class="mini-bar-fill" style="width:${val*10}%;background:${c}"></div></div>
+          <span class="criteria-val" style="color:${c}">${val}/10</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  const transcriptHTML = (data.conversation || []).map(m => `
+    <div class="t-entry ${m.role === 'assistant' ? 'agent' : 'student'}">
+      <div class="t-role">${m.role === 'assistant' ? 'Evaluador' : 'Estudiante'}</div>
+      ${esc(m.content)}
+    </div>`).join('');
+
+  document.getElementById('modal-body').innerHTML = `
+    <div>
+      <div class="section-title">Resultado final</div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:8px">
+        <span class="badge ${data.approved ? 'aprobado' : 'reprobado'}" style="font-size:13px;padding:6px 16px">
+          ${data.approved ? '✓ APROBADO' : '✗ REPROBADO'}
+        </span>
+        <span style="font-family:var(--mono);font-size:22px;color:${color};font-weight:500">${pct}%</span>
+        <span style="font-family:var(--mono);font-size:13px;color:var(--text-dim)">${data.total_score}/${data.max_score} puntos</span>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Desglose por criterio</div>
+      <div class="criteria-grid">${criteriaHTML}</div>
+    </div>
+    <div>
+      <div class="section-title">Transcripción de la sesión</div>
+      <div class="transcript">${transcriptHTML}</div>
+    </div>
+  `;
+
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+function esc(t) {
+  if (!t) return '';
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+loadReports();
+</script>
+</body>
+</html>

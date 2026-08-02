@@ -1,0 +1,57 @@
+# === Material del curso (no forma parte del proyecto) ===
+LIDR_AI4Devs/
+lidr_extractor.py
+run_extractor.command
+
+# === Datos sensibles: reportes con nombres y transcripciones de estudiantes ===
+reportes/*.json
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+.venv/
+env/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# === Secretos y entorno ===
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# === Modelos y binarios pesados (se descargan en setup) ===
+*.onnx
+*.onnx.json
+piper/
+models/
+*.bin
+*.gguf
+
+# === Audio temporal ===
+*.wav
+*.mp3
+tmp/
+temp/
+
+# === Sistema operativo ===
+.DS_Store
+.AppleDouble
+Thumbs.db
+
+# === Editores ===
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# === Código de práctica ajeno al proyecto ===
+test.py

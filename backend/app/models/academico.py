@@ -58,9 +58,7 @@ class Ficha(ModeloBase):
     inscripciones: Mapped[list["Inscripcion"]] = relationship(
         back_populates="ficha", cascade="all, delete-orphan"
     )
-    guias: Mapped[list["Guia"]] = relationship(
-        back_populates="ficha", cascade="all, delete-orphan"
-    )
+    guias: Mapped[list["Guia"]] = relationship(back_populates="ficha", cascade="all, delete-orphan")
 
 
 class Inscripcion(ModeloBase):
@@ -94,9 +92,7 @@ class Guia(ModeloBase):
     __tablename__ = "guias"
     __table_args__ = (
         CheckConstraint("cierra_en > abre_en", name="ck_guia_ventana_valida"),
-        CheckConstraint(
-            "num_preguntas BETWEEN 3 AND 20", name="ck_guia_num_preguntas"
-        ),
+        CheckConstraint("num_preguntas BETWEEN 3 AND 20", name="ck_guia_num_preguntas"),
         Index("idx_guia_ficha_estado", "ficha_id", "estado"),
     )
 
@@ -161,9 +157,7 @@ class Rubrica(ModeloBase):
 
 class CriterioRubrica(ModeloBase):
     __tablename__ = "criterios_rubrica"
-    __table_args__ = (
-        CheckConstraint("peso BETWEEN 1 AND 100", name="ck_criterio_peso"),
-    )
+    __table_args__ = (CheckConstraint("peso BETWEEN 1 AND 100", name="ck_criterio_peso"),)
 
     rubrica_id: Mapped[uuid.UUID] = mapped_column(
         PgUUID(as_uuid=True), ForeignKey("rubricas.id", ondelete="CASCADE"), nullable=False

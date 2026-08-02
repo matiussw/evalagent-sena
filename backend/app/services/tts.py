@@ -57,6 +57,7 @@ async def _ejecutar(*args: str, timeout: float = 30.0) -> int:
 # Interfaz
 # --------------------------------------------------------------------------- #
 
+
 class MotorTTS(ABC):
     """Contrato común. Toda implementación devuelve WAV en base64."""
 
@@ -92,8 +93,10 @@ class PiperTTS(MotorTTS):
         try:
             proc = await asyncio.create_subprocess_exec(
                 self._binario,
-                "--model", self._voz,
-                "--output_file", salida,
+                "--model",
+                self._voz,
+                "--output_file",
+                salida,
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.PIPE,
@@ -130,8 +133,17 @@ class SayTTS(MotorTTS):
         try:
             await _ejecutar("say", "-v", self._voz, "--output-file", aiff, texto)
             await _ejecutar(
-                "ffmpeg", "-y", "-i", aiff,
-                "-ar", "22050", "-ac", "1", "-f", "wav", wav,
+                "ffmpeg",
+                "-y",
+                "-i",
+                aiff,
+                "-ar",
+                "22050",
+                "-ac",
+                "1",
+                "-f",
+                "wav",
+                wav,
             )
             return _leer_wav_base64(wav)
         finally:
@@ -178,6 +190,7 @@ class SinTTS(MotorTTS):
 # --------------------------------------------------------------------------- #
 # Utilidades
 # --------------------------------------------------------------------------- #
+
 
 def _leer_wav_base64(ruta: str) -> str:
     archivo = Path(ruta)

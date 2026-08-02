@@ -40,12 +40,9 @@ SvcRevision = Annotated[ServicioRevision, Depends(_svc_revision)]
 # Aprendiz: sustentar
 # --------------------------------------------------------------------------- #
 
-@router.post(
-    "/sesiones", response_model=SesionIniciada, status_code=status.HTTP_201_CREATED
-)
-async def iniciar_sesion(
-    datos: SesionCrear, aprendiz: Aprendiz, svc: SvcSesion
-) -> SesionIniciada:
+
+@router.post("/sesiones", response_model=SesionIniciada, status_code=status.HTTP_201_CREATED)
+async def iniciar_sesion(datos: SesionCrear, aprendiz: Aprendiz, svc: SvcSesion) -> SesionIniciada:
     """Inicia una sustentación y devuelve el ticket del canal de voz.
 
     El ticket caduca en 60 segundos y es de un solo uso.
@@ -69,9 +66,7 @@ async def latido(sesion_id: uuid.UUID, aprendiz: Aprendiz, svc: SvcSesion) -> No
 
 
 @router.get("/sesiones/{sesion_id}", response_model=SesionDetalle)
-async def obtener_sesion(
-    sesion_id: uuid.UUID, aprendiz: Aprendiz, svc: SvcSesion
-) -> SesionDetalle:
+async def obtener_sesion(sesion_id: uuid.UUID, aprendiz: Aprendiz, svc: SvcSesion) -> SesionDetalle:
     sesion = await svc.obtener_para_aprendiz(sesion_id, aprendiz)
     return SesionDetalle(
         **SesionPublica.model_validate(sesion).model_dump(),
@@ -126,15 +121,14 @@ def _mensaje_estado(estado: EstadoSesion) -> str:
 
 
 @router.post("/sesiones/{sesion_id}/reclamar", response_model=SesionPublica)
-async def reclamar(
-    sesion_id: uuid.UUID, aprendiz: Aprendiz, svc: SvcRevision
-) -> SesionPublica:
+async def reclamar(sesion_id: uuid.UUID, aprendiz: Aprendiz, svc: SvcRevision) -> SesionPublica:
     return SesionPublica.model_validate(await svc.reclamar(sesion_id, aprendiz))
 
 
 # --------------------------------------------------------------------------- #
 # Docente: revisar y confirmar
 # --------------------------------------------------------------------------- #
+
 
 @router.get("/sesiones", response_model=list[SesionPublica])
 async def bandeja_de_revision(

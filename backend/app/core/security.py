@@ -17,9 +17,7 @@ from app.core.config import get_settings
 TipoToken = Literal["access", "refresh", "ws_ticket"]
 
 _settings = get_settings()
-_pwd = CryptContext(
-    schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=_settings.BCRYPT_ROUNDS
-)
+_pwd = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=_settings.BCRYPT_ROUNDS)
 
 
 class ErrorToken(Exception):
@@ -29,6 +27,7 @@ class ErrorToken(Exception):
 # --------------------------------------------------------------------------- #
 # Contraseñas
 # --------------------------------------------------------------------------- #
+
 
 def hashear_password(password: str) -> str:
     return _pwd.hash(password)
@@ -42,9 +41,8 @@ def verificar_password(password: str, password_hash: str) -> bool:
 # Tokens
 # --------------------------------------------------------------------------- #
 
-def _crear_token(
-    *, sub: str, tipo: TipoToken, expira_en: timedelta, extra: dict[str, Any]
-) -> str:
+
+def _crear_token(*, sub: str, tipo: TipoToken, expira_en: timedelta, extra: dict[str, Any]) -> str:
     ahora = datetime.now(UTC)
     payload: dict[str, Any] = {
         "sub": sub,
@@ -97,15 +95,12 @@ def decodificar_token(token: str, *, tipo_esperado: TipoToken) -> dict[str, Any]
     token de acceso.
     """
     try:
-        payload = jwt.decode(
-            token, _settings.SECRET_KEY, algorithms=[_settings.ALGORITMO_JWT]
-        )
+        payload = jwt.decode(token, _settings.SECRET_KEY, algorithms=[_settings.ALGORITMO_JWT])
     except JWTError as exc:
         raise ErrorToken("Token inválido o caducado") from exc
 
     if payload.get("type") != tipo_esperado:
         raise ErrorToken(
-            f"Se esperaba un token de tipo '{tipo_esperado}' "
-            f"y se recibió '{payload.get('type')}'"
+            f"Se esperaba un token de tipo '{tipo_esperado}' y se recibió '{payload.get('type')}'"
         )
     return payload

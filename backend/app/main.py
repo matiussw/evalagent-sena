@@ -26,9 +26,7 @@ async def ciclo_de_vida(app: FastAPI):
     motor = tts.motor_activo()
     logger.info("Motor TTS: %s", motor.describir())
     if motor.nombre == "ninguno":
-        logger.warning(
-            "Sin motor TTS: las sustentaciones funcionarán en modo solo texto"
-        )
+        logger.warning("Sin motor TTS: las sustentaciones funcionarán en modo solo texto")
     yield
 
 

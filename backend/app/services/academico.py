@@ -40,9 +40,7 @@ class ServicioAcademico:
     # ------------------------------------------------------------- fichas
     async def crear_ficha(self, datos: FichaCrear, docente: Usuario) -> Ficha:
         if await self.fichas.por_codigo(datos.codigo):
-            raise Conflicto(
-                f"Ya existe una ficha con el código {datos.codigo} en tu institución"
-            )
+            raise Conflicto(f"Ya existe una ficha con el código {datos.codigo} en tu institución")
         ficha = Ficha(**datos.model_dump(), docente_id=docente.id)
         return await self.fichas.crear(ficha)
 
@@ -92,9 +90,7 @@ class ServicioAcademico:
             self._sesion.add(aprendiz)
             await self._sesion.flush()
         elif aprendiz.institucion_id != self._institucion_id:
-            raise Conflicto(
-                "Ese correo pertenece a una cuenta de otra institución"
-            )
+            raise Conflicto("Ese correo pertenece a una cuenta de otra institución")
 
         if await self.inscripciones.activa(ficha_id=ficha.id, aprendiz_id=aprendiz.id):
             raise Conflicto("El aprendiz ya está inscrito en esta ficha")
@@ -104,9 +100,7 @@ class ServicioAcademico:
         )
 
     # -------------------------------------------------------------- guías
-    async def crear_guia(
-        self, ficha_id: uuid.UUID, datos: GuiaCrear, docente: Usuario
-    ) -> Guia:
+    async def crear_guia(self, ficha_id: uuid.UUID, datos: GuiaCrear, docente: Usuario) -> Guia:
         ficha = await self.obtener_ficha_propia(ficha_id, docente)
         return await self.guias.crear(Guia(**datos.model_dump(), ficha_id=ficha.id))
 
@@ -148,9 +142,7 @@ class ServicioAcademico:
                 "preguntas del agente al temario."
             )
         if guia.rubrica is None or not guia.rubrica.criterios:
-            raise ReglaDeNegocio(
-                "La guía necesita una rúbrica antes de publicarse."
-            )
+            raise ReglaDeNegocio("La guía necesita una rúbrica antes de publicarse.")
         if not guia.abre_en or not guia.cierra_en:
             raise ReglaDeNegocio("Define la ventana de sustentación de la guía.")
 
@@ -173,13 +165,9 @@ class ServicioAcademico:
             await self._sesion.delete(guia.rubrica)
             await self._sesion.flush()
 
-        rubrica = Rubrica(
-            guia_id=guia.id, umbral_aprobacion=datos.umbral_aprobacion
-        )
+        rubrica = Rubrica(guia_id=guia.id, umbral_aprobacion=datos.umbral_aprobacion)
         rubrica.criterios = [
-            CriterioRubrica(
-                nombre=c.nombre, descripcion=c.descripcion, peso=c.peso, orden=i
-            )
+            CriterioRubrica(nombre=c.nombre, descripcion=c.descripcion, peso=c.peso, orden=i)
             for i, c in enumerate(datos.criterios)
         ]
         self._sesion.add(rubrica)

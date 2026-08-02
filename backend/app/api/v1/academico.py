@@ -36,6 +36,7 @@ Servicio = Annotated[ServicioAcademico, Depends(_servicio)]
 # Fichas
 # --------------------------------------------------------------------------- #
 
+
 @router.post("/fichas", response_model=FichaPublica, status_code=status.HTTP_201_CREATED)
 async def crear_ficha(datos: FichaCrear, docente: Docente, svc: Servicio) -> FichaPublica:
     ficha = await svc.crear_ficha(datos, docente)
@@ -60,9 +61,7 @@ async def listar_fichas(
 
 
 @router.get("/fichas/{ficha_id}", response_model=FichaPublica)
-async def obtener_ficha(
-    ficha_id: uuid.UUID, docente: Docente, svc: Servicio
-) -> FichaPublica:
+async def obtener_ficha(ficha_id: uuid.UUID, docente: Docente, svc: Servicio) -> FichaPublica:
     return FichaPublica.model_validate(await svc.obtener_ficha_propia(ficha_id, docente))
 
 
@@ -70,21 +69,18 @@ async def obtener_ficha(
 async def actualizar_ficha(
     ficha_id: uuid.UUID, datos: FichaActualizar, docente: Docente, svc: Servicio
 ) -> FichaPublica:
-    return FichaPublica.model_validate(
-        await svc.actualizar_ficha(ficha_id, datos, docente)
-    )
+    return FichaPublica.model_validate(await svc.actualizar_ficha(ficha_id, datos, docente))
 
 
 @router.post("/fichas/{ficha_id}/archivar", response_model=FichaPublica)
-async def archivar_ficha(
-    ficha_id: uuid.UUID, docente: Docente, svc: Servicio
-) -> FichaPublica:
+async def archivar_ficha(ficha_id: uuid.UUID, docente: Docente, svc: Servicio) -> FichaPublica:
     return FichaPublica.model_validate(await svc.archivar_ficha(ficha_id, docente))
 
 
 # --------------------------------------------------------------------------- #
 # Inscripciones
 # --------------------------------------------------------------------------- #
+
 
 @router.post(
     "/fichas/{ficha_id}/inscripciones",
@@ -110,6 +106,7 @@ async def listar_inscripciones(
 # --------------------------------------------------------------------------- #
 # Guías
 # --------------------------------------------------------------------------- #
+
 
 @router.post(
     "/fichas/{ficha_id}/guias",
@@ -138,9 +135,7 @@ async def mis_guias(aprendiz: Aprendiz, svc: Servicio) -> list[GuiaPublica]:
 
 
 @router.get("/guias/{guia_id}", response_model=GuiaDetalle)
-async def obtener_guia(
-    guia_id: uuid.UUID, usuario: UsuarioActual, svc: Servicio
-) -> GuiaDetalle:
+async def obtener_guia(guia_id: uuid.UUID, usuario: UsuarioActual, svc: Servicio) -> GuiaDetalle:
     if usuario.rol == RolUsuario.APRENDIZ:
         guia = await svc.guia_sustentable(guia_id, usuario)
     else:
@@ -156,9 +151,7 @@ async def actualizar_guia(
 
 
 @router.post("/guias/{guia_id}/publicar", response_model=GuiaPublica)
-async def publicar_guia(
-    guia_id: uuid.UUID, docente: Docente, svc: Servicio
-) -> GuiaPublica:
+async def publicar_guia(guia_id: uuid.UUID, docente: Docente, svc: Servicio) -> GuiaPublica:
     """Publica la guía. Exige contexto técnico, rúbrica y ventana definida."""
     return GuiaPublica.model_validate(await svc.publicar_guia(guia_id, docente))
 
@@ -167,14 +160,13 @@ async def publicar_guia(
 # Rúbricas
 # --------------------------------------------------------------------------- #
 
+
 @router.put("/guias/{guia_id}/rubrica", response_model=RubricaPublica)
 async def definir_rubrica(
     guia_id: uuid.UUID, datos: RubricaCrear, docente: Docente, svc: Servicio
 ) -> RubricaPublica:
     """Reemplaza la rúbrica completa. Los pesos deben sumar 100."""
-    return RubricaPublica.model_validate(
-        await svc.definir_rubrica(guia_id, datos, docente)
-    )
+    return RubricaPublica.model_validate(await svc.definir_rubrica(guia_id, datos, docente))
 
 
 @router.get("/guias/{guia_id}/rubrica", response_model=RubricaPublica)

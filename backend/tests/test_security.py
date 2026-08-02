@@ -17,6 +17,7 @@ def ids() -> tuple[uuid.UUID, uuid.UUID]:
 # Contraseñas
 # --------------------------------------------------------------------------- #
 
+
 def test_el_hash_no_es_reversible_ni_repetible() -> None:
     clave = "unaClaveSegura2026"
     h1 = security.hashear_password(clave)
@@ -36,6 +37,7 @@ def test_password_incorrecta_no_verifica() -> None:
 # --------------------------------------------------------------------------- #
 # Tokens
 # --------------------------------------------------------------------------- #
+
 
 def test_token_de_acceso_lleva_rol_y_tenant(ids) -> None:
     """El `tid` en el token es la base del aislamiento multi-tenant (ADR-003)."""
@@ -62,9 +64,7 @@ def test_un_refresh_no_sirve_como_token_de_acceso(ids) -> None:
 
 def test_un_ticket_ws_no_sirve_como_token_de_acceso(ids) -> None:
     usuario_id, _ = ids
-    ticket = security.crear_ticket_ws(
-        sesion_id=uuid.uuid4(), aprendiz_id=usuario_id, jti="abc"
-    )
+    ticket = security.crear_ticket_ws(sesion_id=uuid.uuid4(), aprendiz_id=usuario_id, jti="abc")
 
     with pytest.raises(security.ErrorToken):
         security.decodificar_token(ticket, tipo_esperado="access")
@@ -100,9 +100,7 @@ def test_ticket_ws_liga_sesion_y_aprendiz(ids) -> None:
     aprendiz_id, _ = ids
     sesion_id = uuid.uuid4()
 
-    ticket = security.crear_ticket_ws(
-        sesion_id=sesion_id, aprendiz_id=aprendiz_id, jti="unico-123"
-    )
+    ticket = security.crear_ticket_ws(sesion_id=sesion_id, aprendiz_id=aprendiz_id, jti="unico-123")
     payload = security.decodificar_token(ticket, tipo_esperado="ws_ticket")
 
     assert payload["sid"] == str(sesion_id)

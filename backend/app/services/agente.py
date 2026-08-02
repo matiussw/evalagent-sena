@@ -135,7 +135,7 @@ class AgenteEvaluador:
                 f"decir. Basa tu siguiente pregunta en esas palabras exactas.]"
             )
 
-        mensajes = self.historial[:-1] + [{"role": "user", "content": ultimo}]
+        mensajes = [*self.historial[:-1], {"role": "user", "content": ultimo}]
         respuesta = await self._llamar_ollama(mensajes, temperatura=0.4, max_tokens=200)
 
         self.historial.append({"role": "assistant", "content": respuesta})
@@ -165,8 +165,7 @@ class AgenteEvaluador:
         )
 
         crudo = await self._llamar_ollama(
-            [{"role": "system", "content": prompt},
-             {"role": "user", "content": conversacion}],
+            [{"role": "system", "content": prompt}, {"role": "user", "content": conversacion}],
             temperatura=0.1,
             max_tokens=200,
             con_system=False,
@@ -189,10 +188,7 @@ class AgenteEvaluador:
             logger.warning("No se pudo interpretar la calificación: %r", crudo[:200])
             return dict.fromkeys(nombres, 0)
 
-        return {
-            nombre: max(0, min(10, int(datos.get(nombre, 0) or 0)))
-            for nombre in nombres
-        }
+        return {nombre: max(0, min(10, int(datos.get(nombre, 0) or 0))) for nombre in nombres}
 
     # ---------------------------------------------------------------- LLM
     async def _llamar_ollama(
@@ -205,9 +201,7 @@ class AgenteEvaluador:
         reintentos: int = 2,
     ) -> str:
         cuerpo_mensajes = (
-            [{"role": "system", "content": self._system()}, *mensajes]
-            if con_system
-            else mensajes
+            [{"role": "system", "content": self._system()}, *mensajes] if con_system else mensajes
         )
         payload = {
             "model": _settings.OLLAMA_MODEL,
@@ -229,10 +223,6 @@ class AgenteEvaluador:
                     return r.json()["message"]["content"].strip()
             except (httpx.HTTPError, KeyError, ValueError) as exc:
                 ultimo_error = exc
-                logger.warning(
-                    "Ollama falló (intento %d/%d): %s", intento + 1, reintentos + 1, exc
-                )
+                logger.warning("Ollama falló (intento %d/%d): %s", intento + 1, reintentos + 1, exc)
 
-        raise ErrorLLM(
-            f"Ollama no respondió tras {reintentos + 1} intentos: {ultimo_error}"
-        )
+        raise ErrorLLM(f"Ollama no respondió tras {reintentos + 1} intentos: {ultimo_error}")

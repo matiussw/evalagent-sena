@@ -46,18 +46,14 @@ class Usuario(ModeloBase):
     # Único global, no por tenant: una persona, una cuenta.
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
-    rol: Mapped[RolUsuario] = mapped_column(
-        Enum(RolUsuario, name="rol_usuario"), nullable=False
-    )
+    rol: Mapped[RolUsuario] = mapped_column(Enum(RolUsuario, name="rol_usuario"), nullable=False)
     activo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     institucion: Mapped[Institucion] = relationship(back_populates="usuarios")
     fichas_impartidas: Mapped[list["Ficha"]] = relationship(
         back_populates="docente", foreign_keys="Ficha.docente_id"
     )
-    inscripciones: Mapped[list["Inscripcion"]] = relationship(
-        back_populates="aprendiz"
-    )
+    inscripciones: Mapped[list["Inscripcion"]] = relationship(back_populates="aprendiz")
 
     def __repr__(self) -> str:
         # El hash de la contraseña nunca aparece en la representación.

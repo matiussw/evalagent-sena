@@ -40,9 +40,7 @@ class RepositorioFichas(RepositorioTenant[Ficha]):
     modelo = Ficha
 
     async def por_codigo(self, codigo: str) -> Ficha | None:
-        resultado = await self._sesion.execute(
-            self._base().where(Ficha.codigo == codigo)
-        )
+        resultado = await self._sesion.execute(self._base().where(Ficha.codigo == codigo))
         return resultado.scalar_one_or_none()
 
     async def de_docente(self, docente_id: uuid.UUID, **kwargs) -> list[Ficha]:
@@ -75,9 +73,7 @@ class RepositorioInscripciones(RepositorioTenant[Inscripcion]):
         await self._sesion.flush()
         return entidad
 
-    async def activa(
-        self, *, ficha_id: uuid.UUID, aprendiz_id: uuid.UUID
-    ) -> Inscripcion | None:
+    async def activa(self, *, ficha_id: uuid.UUID, aprendiz_id: uuid.UUID) -> Inscripcion | None:
         resultado = await self._sesion.execute(
             self._base().where(
                 Inscripcion.ficha_id == ficha_id,

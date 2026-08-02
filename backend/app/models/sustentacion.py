@@ -91,9 +91,7 @@ class Sesion(ModeloBase):
         cascade="all, delete-orphan",
         order_by="TurnoConversacion.orden",
     )
-    revision: Mapped["Revision | None"] = relationship(
-        back_populates="sesion", uselist=False
-    )
+    revision: Mapped["Revision | None"] = relationship(back_populates="sesion", uselist=False)
 
 
 class TurnoConversacion(ModeloBase):
@@ -140,9 +138,7 @@ class Revision(ModeloBase):
     retroalimentacion: Mapped[str | None] = mapped_column(Text)
     nota_final: Mapped[float] = mapped_column(Numeric(5, 2), nullable=False)
     aprobado: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    confirmada_en: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    confirmada_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
     sesion: Mapped[Sesion] = relationship(back_populates="revision")
     revisor: Mapped["Usuario"] = relationship()

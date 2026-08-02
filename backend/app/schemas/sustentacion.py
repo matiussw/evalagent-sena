@@ -19,9 +19,7 @@ class SesionCrear(BaseModel):
     @classmethod
     def _debe_aceptar(cls, v: bool) -> bool:
         if not v:
-            raise ValueError(
-                "Debes aceptar el aviso de tratamiento de datos para sustentar"
-            )
+            raise ValueError("Debes aceptar el aviso de tratamiento de datos para sustentar")
         return v
 
 
@@ -62,6 +60,7 @@ class SesionDetalle(SesionPublica):
 # --------------------------------------------------------------------------- #
 # Revisión (ADR-006)
 # --------------------------------------------------------------------------- #
+
 
 class RevisionPendiente(BaseModel):
     """Lo que ve el instructor antes de confirmar.

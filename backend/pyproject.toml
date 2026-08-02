@@ -1,0 +1,26 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "ARG", "RUF"]
+ignore = [
+    "B008",    # Depends() en argumentos por defecto es el patrón de FastAPI
+    "RUF001",  # Caracteres ambiguos: el proyecto está en español
+    "RUF002",
+    "RUF003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["ARG001", "ARG002", "ARG005", "S101", "E501"]
+"alembic/*" = ["E501", "I001", "ARG001"]
+# Los prompts son texto literal: partir las líneas cambiaría lo que recibe el modelo.
+"app/services/agente.py" = ["E501"]
+# El lifespan de FastAPI recibe `app` aunque no lo use.
+"app/main.py" = ["ARG001"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.coverage.run]
+omit = ["tests/*", "alembic/*"]

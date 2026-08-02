@@ -143,13 +143,9 @@ async def test_bloqueo_por_fuerza_bruta(cliente, docente_a):
     limitador.limpiar(docente_a.email)
 
     for _ in range(5):
-        await cliente.post(
-            "/auth/login", data={"username": docente_a.email, "password": "mal"}
-        )
+        await cliente.post("/auth/login", data={"username": docente_a.email, "password": "mal"})
 
-    r = await cliente.post(
-        "/auth/login", data={"username": docente_a.email, "password": "mal"}
-    )
+    r = await cliente.post("/auth/login", data={"username": docente_a.email, "password": "mal"})
 
     assert r.status_code == 429
     limitador.limpiar(docente_a.email)

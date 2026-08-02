@@ -108,9 +108,7 @@ async def test_no_se_accede_a_recursos_de_otra_institucion(
     intruso = docente_b if rol == "docente" else aprendiz_b
     ruta = plantilla.format(**{k: str(v) for k, v in recursos_de_a.items()})
 
-    respuesta = await cliente.request(
-        metodo, ruta, headers=token_de(intruso), json=cuerpo
-    )
+    respuesta = await cliente.request(metodo, ruta, headers=token_de(intruso), json=cuerpo)
 
     assert respuesta.status_code == 404, (
         f"{metodo} {ruta} como {rol} devolvió {respuesta.status_code} en lugar "
@@ -213,9 +211,7 @@ async def test_ningun_endpoint_queda_sin_cubrir():
     }
 
     del_esquema = {
-        ruta.removeprefix("/api/v1")
-        for ruta in app.openapi()["paths"]
-        if ruta not in exentas
+        ruta.removeprefix("/api/v1") for ruta in app.openapi()["paths"] if ruta not in exentas
     }
     sin_cubrir = del_esquema - cubiertos
 

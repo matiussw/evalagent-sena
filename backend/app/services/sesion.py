@@ -23,7 +23,7 @@ from app.models.sustentacion import EventoAuditoria, Revision, Sesion, TurnoConv
 from app.repositories.academico import RepositorioFichas, RepositorioSesiones
 from app.schemas.sustentacion import RevisionConfirmar
 from app.services.academico import ServicioAcademico, calcular_nota
-from app.services.errores import Conflicto, NoEncontrado, ReglaDeNegocio, SinPermiso
+from app.services.errores import Conflicto, NoEncontrado, ReglaDeNegocio
 
 _settings = get_settings()
 
@@ -36,15 +36,11 @@ class ServicioSesion:
         self.fichas = RepositorioFichas(sesion, institucion_id)
         self._academico = ServicioAcademico(sesion, institucion_id)
 
-    async def iniciar(
-        self, guia_id: uuid.UUID, aprendiz: Usuario
-    ) -> tuple[Sesion, Guia, str]:
+    async def iniciar(self, guia_id: uuid.UUID, aprendiz: Usuario) -> tuple[Sesion, Guia, str]:
         """Crea la sesión y emite el ticket del canal de voz."""
         guia = await self._academico.guia_sustentable(guia_id, aprendiz)
 
-        previa = await self.sesiones.activa_de_aprendiz(
-            guia_id=guia.id, aprendiz_id=aprendiz.id
-        )
+        previa = await self.sesiones.activa_de_aprendiz(guia_id=guia.id, aprendiz_id=aprendiz.id)
         if previa is not None:
             raise Conflicto("Ya sustentaste esta guía")
 
@@ -67,22 +63,16 @@ class ServicioSesion:
             AccionAuditoria.SESION_INICIADA, sesion_id=sesion.id, actor_id=aprendiz.id
         )
 
-        ticket = crear_ticket_ws(
-            sesion_id=sesion.id, aprendiz_id=aprendiz.id, jti=uuid.uuid4().hex
-        )
+        ticket = crear_ticket_ws(sesion_id=sesion.id, aprendiz_id=aprendiz.id, jti=uuid.uuid4().hex)
         return sesion, guia, ticket
 
-    async def obtener_para_aprendiz(
-        self, sesion_id: uuid.UUID, aprendiz: Usuario
-    ) -> Sesion:
+    async def obtener_para_aprendiz(self, sesion_id: uuid.UUID, aprendiz: Usuario) -> Sesion:
         sesion = await self.sesiones.con_turnos(sesion_id)
         if sesion is None or sesion.aprendiz_id != aprendiz.id:
             raise NoEncontrado("Sesión no encontrada")
         return sesion
 
-    async def obtener_para_docente(
-        self, sesion_id: uuid.UUID, docente: Usuario
-    ) -> Sesion:
+    async def obtener_para_docente(self, sesion_id: uuid.UUID, docente: Usuario) -> Sesion:
         """Solo el docente dueño de la ficha de la guía puede verla."""
         sesion = await self.sesiones.con_turnos(sesion_id)
         if sesion is None:
@@ -183,9 +173,7 @@ class ServicioSesion:
         detalle: dict | None = None,
     ) -> None:
         self._sesion.add(
-            EventoAuditoria(
-                sesion_id=sesion_id, actor_id=actor_id, accion=accion, detalle=detalle
-            )
+            EventoAuditoria(sesion_id=sesion_id, actor_id=actor_id, accion=accion, detalle=detalle)
         )
         await self._sesion.flush()
 
@@ -207,9 +195,7 @@ class ServicioRevision:
             EstadoSesion.EN_RECLAMACION,
             EstadoSesion.CALIFICADA,
         ):
-            raise Conflicto(
-                f"La sesión está en estado {sesion.estado} y no admite revisión"
-            )
+            raise Conflicto(f"La sesión está en estado {sesion.estado} y no admite revisión")
         return sesion
 
     async def confirmar(

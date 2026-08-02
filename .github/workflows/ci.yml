@@ -1,0 +1,125 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "feature-**", "finalproject-**"]
+  pull_request:
+    branches: ["main"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend · tests y calidad
+    # ubuntu-latest a propósito: verifica RNF-08 (portabilidad) y que el TTS ya
+    # no depende de macOS, que era la deuda D1.
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: evalagent
+          POSTGRES_PASSWORD: evalagent
+          POSTGRES_DB: evalagent_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      SECRET_KEY: clave-solo-para-ci-no-usar-en-produccion-1234567890
+      DATABASE_URL: postgresql+asyncpg://evalagent:evalagent@localhost:5432/evalagent_test
+      CORS_ORIGINS: http://localhost:5173
+      ENTORNO: pruebas
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Instalar dependencias del sistema
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg espeak-ng
+
+      - name: Instalar dependencias de Python
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint
+        run: ruff check app tests
+
+      - name: Formato
+        run: ruff format --check app tests
+
+      - name: Migraciones aplicables y reversibles
+        run: |
+          alembic upgrade head
+          alembic downgrade base
+          alembic upgrade head
+
+      - name: Tests con cobertura
+        run: pytest --cov=app --cov-report=term-missing --cov-fail-under=70
+
+      - name: Verificar que no hay llamadas a APIs de IA externas
+        # RNF-03 / ADR-001: ningún dato de aprendices sale de la institución.
+        run: |
+          if grep -rniE "api\.(openai|anthropic)\.com|generativelanguage\.googleapis" app/; then
+            echo "::error::Se detectó una llamada a una API de IA externa. Viola el ADR-001."
+            exit 1
+          fi
+
+  frontend:
+    name: Frontend · tipos, tests y build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Comprobación de tipos
+        run: npx tsc -b
+
+      - name: Tests
+        run: npx vitest run
+
+      - name: Build de producción
+        run: npm run build
+
+  docker:
+    name: Imágenes Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Construir imagen de la API
+        # Comprueba que Piper y su voz se instalan correctamente (T-012).
+        run: docker build -t evalagent-api:ci ./backend
+
+      - name: Construir imagen del frontend
+        run: docker build -t evalagent-web:ci ./frontend
+
+      - name: Verificar que Piper quedó instalado en la imagen
+        run: docker run --rm --entrypoint sh evalagent-api:ci -c "command -v piper && ls /app/voces/"

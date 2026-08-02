@@ -18,6 +18,10 @@ from collections.abc import AsyncGenerator
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+
+# --- Compatibilidad de tipos Postgres -> SQLite ---------------------------- #
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.schema import CreateIndex
@@ -28,22 +32,18 @@ from app.main import app
 from app.models import Base, Ficha, Institucion, RolUsuario, Usuario
 
 
-# --- Compatibilidad de tipos Postgres -> SQLite ---------------------------- #
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PgUUID
-
-
 @compiles(JSONB, "sqlite")
-def _jsonb_sqlite(type_, compiler, **kw):  # noqa: ANN001, ARG001
+def _jsonb_sqlite(type_, compiler, **kw):
     return "JSON"
 
 
 @compiles(PgUUID, "sqlite")
-def _uuid_sqlite(type_, compiler, **kw):  # noqa: ANN001, ARG001
+def _uuid_sqlite(type_, compiler, **kw):
     return "CHAR(36)"
 
 
 @compiles(CreateIndex, "sqlite")
-def _indice_sqlite(create, compiler, **kw):  # noqa: ANN001
+def _indice_sqlite(create, compiler, **kw):
     # SQLite no admite el índice parcial con la sintaxis de Postgres.
     if create.element.name == "idx_sesion_unica_por_guia":
         return "SELECT 1"
@@ -82,6 +82,7 @@ async def cliente(bd: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
 # Datos de prueba
 # --------------------------------------------------------------------------- #
 
+
 @pytest_asyncio.fixture
 async def institucion_a(bd: AsyncSession) -> Institucion:
     inst = Institucion(nombre="Centro de Servicios y Gestión Empresarial", nit="800111222")
@@ -115,30 +116,22 @@ async def _crear_usuario(
 
 @pytest_asyncio.fixture
 async def docente_a(bd, institucion_a) -> Usuario:
-    return await _crear_usuario(
-        bd, institucion_a, RolUsuario.DOCENTE, "carolina@sena.edu.co"
-    )
+    return await _crear_usuario(bd, institucion_a, RolUsuario.DOCENTE, "carolina@sena.edu.co")
 
 
 @pytest_asyncio.fixture
 async def docente_b(bd, institucion_b) -> Usuario:
-    return await _crear_usuario(
-        bd, institucion_b, RolUsuario.DOCENTE, "otro.docente@sena.edu.co"
-    )
+    return await _crear_usuario(bd, institucion_b, RolUsuario.DOCENTE, "otro.docente@sena.edu.co")
 
 
 @pytest_asyncio.fixture
 async def aprendiz_a(bd, institucion_a) -> Usuario:
-    return await _crear_usuario(
-        bd, institucion_a, RolUsuario.APRENDIZ, "jhon@aprendiz.sena.edu.co"
-    )
+    return await _crear_usuario(bd, institucion_a, RolUsuario.APRENDIZ, "jhon@aprendiz.sena.edu.co")
 
 
 @pytest_asyncio.fixture
 async def aprendiz_b(bd, institucion_b) -> Usuario:
-    return await _crear_usuario(
-        bd, institucion_b, RolUsuario.APRENDIZ, "otra.aprendiz@sena.edu.co"
-    )
+    return await _crear_usuario(bd, institucion_b, RolUsuario.APRENDIZ, "otra.aprendiz@sena.edu.co")
 
 
 @pytest.fixture

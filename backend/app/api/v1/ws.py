@@ -102,6 +102,7 @@ async def canal_sustentacion(
 # Validación y carga
 # --------------------------------------------------------------------------- #
 
+
 class _CanalNoValido(Exception):
     def __init__(self, codigo: int, motivo: str) -> None:
         self.codigo = codigo
@@ -139,9 +140,7 @@ async def _cargar_contexto(
         raise _CanalNoValido(CIERRE_PROHIBIDO, "La sesión no es tuya")
 
     if sesion.estado not in (EstadoSesion.INICIADA, EstadoSesion.EN_CURSO):
-        raise _CanalNoValido(
-            CIERRE_ESTADO_INVALIDO, f"La sesión está en estado {sesion.estado}"
-        )
+        raise _CanalNoValido(CIERRE_ESTADO_INVALIDO, f"La sesión está en estado {sesion.estado}")
 
     return sesion, aprendiz, servicio
 
@@ -172,6 +171,7 @@ def _construir_agente(sesion: Sesion, aprendiz: Usuario) -> AgenteEvaluador:
 # Conversación
 # --------------------------------------------------------------------------- #
 
+
 async def _saludar(
     websocket: WebSocket,
     agente: AgenteEvaluador,
@@ -187,9 +187,7 @@ async def _saludar(
                 "type": "sesion_reanudada",
                 "pregunta_num": agente.preguntas_hechas,
                 "total_preguntas": agente.num_preguntas,
-                "turnos": [
-                    {"rol": t.rol.value, "contenido": t.contenido} for t in sesion.turnos
-                ],
+                "turnos": [{"rol": t.rol.value, "contenido": t.contenido} for t in sesion.turnos],
             },
         )
         return
@@ -293,9 +291,7 @@ async def _transcribir_mensaje(websocket: WebSocket, mensaje: dict) -> str | Non
         return None
 
     mime = mensaje.get("mime_type", "audio/webm")
-    extension = next(
-        (ext for clave, ext in _EXTENSIONES.items() if clave in mime), ".webm"
-    )
+    extension = next((ext for clave, ext in _EXTENSIONES.items() if clave in mime), ".webm")
 
     ruta = ""
     try:

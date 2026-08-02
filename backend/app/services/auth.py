@@ -58,9 +58,7 @@ class LimitadorIntentos:
         self._intentos.pop(clave, None)
 
 
-limitador = LimitadorIntentos(
-    _settings.LOGIN_INTENTOS_MAX, _settings.LOGIN_VENTANA_SEGUNDOS
-)
+limitador = LimitadorIntentos(_settings.LOGIN_INTENTOS_MAX, _settings.LOGIN_VENTANA_SEGUNDOS)
 
 
 class ServicioAuth:

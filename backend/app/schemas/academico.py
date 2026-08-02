@@ -16,6 +16,7 @@ from app.schemas.comun import EsquemaBase
 # Fichas
 # --------------------------------------------------------------------------- #
 
+
 class FichaCrear(BaseModel):
     codigo: str = Field(min_length=3, max_length=20)
     nombre: str = Field(min_length=3, max_length=200)
@@ -43,6 +44,7 @@ class FichaPublica(EsquemaBase):
 # Inscripciones
 # --------------------------------------------------------------------------- #
 
+
 class InscripcionCrear(BaseModel):
     email: EmailStr
     nombre: str | None = Field(default=None, max_length=150)
@@ -64,6 +66,7 @@ class ResumenCargaMasiva(BaseModel):
 # --------------------------------------------------------------------------- #
 # Guías
 # --------------------------------------------------------------------------- #
+
 
 class GuiaCrear(BaseModel):
     titulo: str = Field(min_length=3, max_length=200)
@@ -110,6 +113,7 @@ class GuiaDetalle(GuiaPublica):
 # Rúbricas
 # --------------------------------------------------------------------------- #
 
+
 class CriterioCrear(BaseModel):
     nombre: str = Field(min_length=2, max_length=100)
     descripcion: str | None = None
@@ -129,9 +133,7 @@ class RubricaCrear(BaseModel):
         """
         total = sum(c.peso for c in self.criterios)
         if total != 100:
-            raise ValueError(
-                f"Los pesos de los criterios deben sumar 100. Suma actual: {total}."
-            )
+            raise ValueError(f"Los pesos de los criterios deben sumar 100. Suma actual: {total}.")
         nombres = [c.nombre.strip().lower() for c in self.criterios]
         if len(set(nombres)) != len(nombres):
             raise ValueError("Hay criterios con el mismo nombre")

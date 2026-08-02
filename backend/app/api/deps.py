@@ -20,9 +20,7 @@ oauth2 = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 SesionBD = Annotated[AsyncSession, Depends(get_sesion)]
 
 
-async def usuario_actual(
-    token: Annotated[str | None, Depends(oauth2)], bd: SesionBD
-) -> Usuario:
+async def usuario_actual(token: Annotated[str | None, Depends(oauth2)], bd: SesionBD) -> Usuario:
     if not token:
         raise CredencialesInvalidas("Falta el token de acceso")
 
@@ -50,9 +48,7 @@ def requiere_rol(*roles: RolUsuario):
 
     async def verificar(usuario: UsuarioActual) -> Usuario:
         if usuario.rol not in roles:
-            raise SinPermiso(
-                f"Esta acción requiere rol {' o '.join(r.value for r in roles)}"
-            )
+            raise SinPermiso(f"Esta acción requiere rol {' o '.join(r.value for r in roles)}")
         return usuario
 
     return verificar

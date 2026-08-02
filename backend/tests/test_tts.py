@@ -30,6 +30,7 @@ def _wav_minimo() -> bytes:
 # limpiar_texto
 # --------------------------------------------------------------------------- #
 
+
 @pytest.mark.parametrize(
     ("entrada", "esperado"),
     [
@@ -47,6 +48,7 @@ def test_limpiar_texto_quita_marcado(entrada: str, esperado: str) -> None:
 # --------------------------------------------------------------------------- #
 # Selección de motor (ADR-005)
 # --------------------------------------------------------------------------- #
+
 
 def test_auto_prefiere_piper_cuando_esta_disponible(monkeypatch) -> None:
     monkeypatch.setattr(tts.PiperTTS, "disponible", lambda self: True)
@@ -99,6 +101,7 @@ def test_motor_forzado_ausente_aborta_el_arranque(monkeypatch) -> None:
 # Síntesis
 # --------------------------------------------------------------------------- #
 
+
 @pytest.mark.asyncio
 async def test_piper_devuelve_wav_en_base64(monkeypatch, tmp_path) -> None:
     """Criterio de aceptación: en Linux con Piper, se obtiene WAV de >0 bytes."""
@@ -109,14 +112,14 @@ async def test_piper_devuelve_wav_en_base64(monkeypatch, tmp_path) -> None:
     class ProcesoSimulado:
         returncode = 0
 
-        async def communicate(self, entrada=None):  # noqa: ARG002
+        async def communicate(self, entrada=None):
             # Piper escribe el WAV en la ruta que recibe por --output_file.
             from pathlib import Path
 
             Path(ProcesoSimulado.salida).write_bytes(_wav_minimo())
             return b"", b""
 
-    async def crear_proceso(*args, **kwargs):  # noqa: ARG001
+    async def crear_proceso(*args, **kwargs):
         ProcesoSimulado.salida = args[args.index("--output_file") + 1]
         return ProcesoSimulado()
 
@@ -170,10 +173,10 @@ async def test_piper_borra_el_temporal_aunque_falle(monkeypatch, tmp_path) -> No
     class ProcesoRoto:
         returncode = 1
 
-        async def communicate(self, entrada=None):  # noqa: ARG002
+        async def communicate(self, entrada=None):
             return b"", b"boom"
 
-    async def crear_proceso(*args, **kwargs):  # noqa: ARG001
+    async def crear_proceso(*args, **kwargs):
         rutas.append(args[args.index("--output_file") + 1])
         return ProcesoRoto()
 

@@ -56,9 +56,7 @@ class RepositorioTenant(Generic[M]):
         resultado = await self._sesion.execute(self._base().where(self.modelo.id == id_))
         return resultado.scalar_one_or_none()
 
-    async def listar(
-        self, *, offset: int = 0, limite: int = 20, **filtros: Any
-    ) -> list[M]:
+    async def listar(self, *, offset: int = 0, limite: int = 20, **filtros: Any) -> list[M]:
         consulta = self._base()
         for campo, valor in filtros.items():
             if valor is not None:
@@ -68,9 +66,7 @@ class RepositorioTenant(Generic[M]):
         return list(resultado.scalars().all())
 
     async def contar(self, **filtros: Any) -> int:
-        consulta = self._filtro_tenant(
-            select(func.count()).select_from(self.modelo)
-        )
+        consulta = self._filtro_tenant(select(func.count()).select_from(self.modelo))
         for campo, valor in filtros.items():
             if valor is not None:
                 consulta = consulta.where(getattr(self.modelo, campo) == valor)

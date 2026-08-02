@@ -57,9 +57,7 @@ async def test_flujo_completo_del_instructor(
     guia_id = guia.json()["id"]
 
     # 3. Definir la rúbrica
-    rubrica = await cliente.put(
-        f"/guias/{guia_id}/rubrica", headers=cabeceras, json=rubrica_valida
-    )
+    rubrica = await cliente.put(f"/guias/{guia_id}/rubrica", headers=cabeceras, json=rubrica_valida)
     assert rubrica.status_code == 200
     assert len(rubrica.json()["criterios"]) == 5
 
@@ -111,9 +109,7 @@ async def test_no_se_publica_sin_contexto_tecnico(
         json={"titulo": "Sin contexto", **_ventana()},
     )
     guia_id = guia.json()["id"]
-    await cliente.put(
-        f"/guias/{guia_id}/rubrica", headers=token_de(docente_a), json=rubrica_valida
-    )
+    await cliente.put(f"/guias/{guia_id}/rubrica", headers=token_de(docente_a), json=rubrica_valida)
 
     r = await cliente.post(f"/guias/{guia_id}/publicar", headers=token_de(docente_a))
 
@@ -129,9 +125,7 @@ async def test_no_se_publica_sin_rubrica(cliente, token_de, docente_a, ficha_a):
         json={"titulo": "Sin rúbrica", "contexto_tecnico": "Endpoints", **_ventana()},
     )
 
-    r = await cliente.post(
-        f"/guias/{guia.json()['id']}/publicar", headers=token_de(docente_a)
-    )
+    r = await cliente.post(f"/guias/{guia.json()['id']}/publicar", headers=token_de(docente_a))
 
     assert r.status_code == 422
     assert "rúbrica" in r.json()["detail"]
@@ -146,9 +140,7 @@ async def test_los_pesos_de_la_rubrica_deben_sumar_cien(
         headers=token_de(docente_a),
         json={"titulo": "Con rúbrica torcida", "contexto_tecnico": "x", **_ventana()},
     )
-    criterios = [
-        {**c, "peso": p} for c, p in zip(rubrica_valida["criterios"], pesos, strict=True)
-    ]
+    criterios = [{**c, "peso": p} for c, p in zip(rubrica_valida["criterios"], pesos, strict=True)]
 
     r = await cliente.put(
         f"/guias/{guia.json()['id']}/rubrica",
@@ -187,9 +179,7 @@ async def test_un_aprendiz_no_puede_crear_fichas(cliente, token_de, aprendiz_a):
     assert r.status_code == 403
 
 
-async def test_archivar_saca_la_ficha_del_listado_activo(
-    cliente, token_de, docente_a, ficha_a
-):
+async def test_archivar_saca_la_ficha_del_listado_activo(cliente, token_de, docente_a, ficha_a):
     r = await cliente.post(f"/fichas/{ficha_a.id}/archivar", headers=token_de(docente_a))
 
     assert r.status_code == 200

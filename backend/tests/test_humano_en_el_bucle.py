@@ -73,6 +73,7 @@ async def sesion_pendiente(bd, institucion_a, docente_a, aprendiz_a, ficha_a, ru
 # El aprendiz no ve nada hasta que un humano confirma
 # --------------------------------------------------------------------------- #
 
+
 async def test_el_aprendiz_no_ve_la_propuesta_del_agente(
     cliente, token_de, aprendiz_a, sesion_pendiente
 ):
@@ -91,9 +92,7 @@ async def test_el_aprendiz_no_ve_la_propuesta_del_agente(
 async def test_la_sesion_del_aprendiz_no_expone_la_propuesta(
     cliente, token_de, aprendiz_a, sesion_pendiente
 ):
-    r = await cliente.get(
-        f"/sesiones/{sesion_pendiente.id}", headers=token_de(aprendiz_a)
-    )
+    r = await cliente.get(f"/sesiones/{sesion_pendiente.id}", headers=token_de(aprendiz_a))
 
     assert r.status_code == 200
     assert "puntuaciones_agente" not in r.json()
@@ -103,12 +102,11 @@ async def test_la_sesion_del_aprendiz_no_expone_la_propuesta(
 # El instructor revisa y confirma
 # --------------------------------------------------------------------------- #
 
+
 async def test_el_instructor_ve_transcripcion_y_propuesta(
     cliente, token_de, docente_a, sesion_pendiente
 ):
-    r = await cliente.get(
-        f"/sesiones/{sesion_pendiente.id}/revision", headers=token_de(docente_a)
-    )
+    r = await cliente.get(f"/sesiones/{sesion_pendiente.id}/revision", headers=token_de(docente_a))
 
     assert r.status_code == 200
     datos = r.json()
@@ -190,6 +188,7 @@ async def test_puntuacion_fuera_de_rango(cliente, token_de, docente_a, sesion_pe
 # Cálculo ponderado (T-010)
 # --------------------------------------------------------------------------- #
 
+
 def test_la_nota_respeta_los_pesos_de_la_rubrica():
     """Caso aritmético del ticket T-010: 40/30/30 con 8/6/10 da 80 %."""
     rubrica = {
@@ -212,6 +211,7 @@ def test_criterio_ausente_puntua_cero():
 # --------------------------------------------------------------------------- #
 # La garantía estructural
 # --------------------------------------------------------------------------- #
+
 
 def test_solo_el_servicio_de_revision_puede_calificar():
     """Criterio de aceptación central de T-011.
@@ -258,7 +258,10 @@ def _es_calificada(nodo: ast.expr) -> bool:
 def _dentro_de_confirmar(arbol: ast.Module, objetivo: ast.Assign) -> bool:
     for nodo in ast.walk(arbol):
         es_funcion = isinstance(nodo, ast.AsyncFunctionDef | ast.FunctionDef)
-        if es_funcion and nodo.name == "confirmar":
-            if any(hijo is objetivo for hijo in ast.walk(nodo)):
-                return True
+        if (
+            es_funcion
+            and nodo.name == "confirmar"
+            and any(hijo is objetivo for hijo in ast.walk(nodo))
+        ):
+            return True
     return False

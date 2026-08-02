@@ -94,9 +94,7 @@ def test_rubrica_congelada_es_obligatoria() -> None:
 
 
 def test_el_consentimiento_es_obligatorio_para_crear_sesion() -> None:
-    assert (
-        models.Sesion.__table__.columns["consentimiento_aceptado_en"].nullable is False
-    )
+    assert models.Sesion.__table__.columns["consentimiento_aceptado_en"].nullable is False
 
 
 @pytest.mark.parametrize(

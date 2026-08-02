@@ -67,3 +67,6 @@ node_modules/
 dist/
 .vite/
 *.tsbuildinfo
+
+# === Notas de trabajo privadas (no forman parte de la entrega) ===
+CONTEXTO_SESION.md

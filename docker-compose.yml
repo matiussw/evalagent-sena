@@ -1,0 +1,60 @@
+# EvalAgent SENA — HU-15: levantar el sistema con un comando.
+#
+#   cp .env.example .env   # y rellena SECRET_KEY
+#   docker compose up
+#
+# Ollama corre en el HOST, no aquí: el acceso a GPU desde contenedor exige
+# drivers y nvidia-container-toolkit, fuera del alcance de un técnico de centro
+# de formación. Ver ADR-001 y el diagrama de despliegue.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-evalagent}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?define POSTGRES_PASSWORD en .env}
+      POSTGRES_DB: ${POSTGRES_DB:-evalagent}
+    volumes:
+      - datos_postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-evalagent}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-evalagent}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-evalagent}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    extra_hosts:
+      # Permite alcanzar el Ollama del host desde el contenedor en Linux.
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - modelos_whisper:/root/.cache/huggingface
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+
+  web:
+    build:
+      context: ./frontend
+    depends_on:
+      - api
+    ports:
+      - "5173:80"
+
+volumes:
+  datos_postgres:
+  modelos_whisper:

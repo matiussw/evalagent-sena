@@ -50,8 +50,9 @@ centro de formación**: ni un dato personal de aprendices sale hacia servicios d
 
 ### 0.5. URL del repositorio
 
-⏳ *Pendiente de publicación en GitHub.* El historial está versionado en local con la
-siguiente estrategia de ramas:
+<https://github.com/matiussw/evalagent-sena>
+
+El historial sigue esta estrategia de ramas:
 
 | Entrega | Rama | Contenido |
 |---|---|---|
@@ -253,6 +254,37 @@ npm install
 npm run dev
 ```
 </details>
+
+**Ejecutar los tests**
+
+La configuración se valida al importar la aplicación y `SECRET_KEY` no tiene valor por
+defecto: sin ella `pytest` aborta al cargar `conftest.py`, antes de recoger ningún test. Las
+variables mínimas son las mismas que usa el job `backend` de
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml):
+
+```bash
+cd backend
+export SECRET_KEY=clave-solo-para-ci-no-usar-en-produccion-1234567890
+export DATABASE_URL=postgresql+asyncpg://evalagent:evalagent@localhost:5432/evalagent_test
+export CORS_ORIGINS=http://localhost:5173
+export ENTORNO=pruebas
+
+pytest                                    # suite completa
+pytest --cov=app --cov-fail-under=70      # con la puerta de cobertura del CI
+```
+
+La suite corre sobre SQLite en memoria (ver `tests/conftest.py`), así que `DATABASE_URL` solo
+tiene que superar la validación de configuración: **no hace falta un Postgres levantado** para
+`pytest`. Sí hace falta para `alembic upgrade head`, que el CI ejecuta aparte junto con su
+reversión.
+
+Frontend:
+
+```bash
+cd frontend
+npx tsc -b        # comprobación de tipos
+npx vitest run    # tests
+```
 
 **Perfiles de hardware**
 
@@ -1030,11 +1062,17 @@ despliegue público.
 
 ## 7. Pull requests
 
-⏳ *Pendientes de apertura.* El repositorio aún no está publicado en GitHub; el historial
-está versionado en local con la estrategia de ramas de la [sección 0.5](#05-url-del-repositorio).
+Un pull request por entrega contra `main`, cada uno con título claro, descripción de qué
+cambia y por qué, e impacto. Estrategia de ramas en la
+[sección 0.5](#05-url-del-repositorio).
 
-Al publicar, se abrirá un pull request por entrega, cada uno con título claro, descripción de
-qué cambia y por qué, e impacto:
+| Entrega | Rama origen → destino | Estado |
+|---|---|---|
+| 1 · Documentación técnica | `feature-entrega1-MAQ` → `main` | ⏳ PR de Entrega 1: pendiente de abrir |
+| 2 · Código funcional | `feature-entrega2-MAQ` → `main` | ⏳ PR de Entrega 2: pendiente de abrir |
+| Final | `finalproject-MAQ` → `main` | ⏳ Pendiente (entrega final) |
+
+Contenido previsto de cada uno:
 
 **Pull Request 1 — Entrega 1 · Documentación técnica**
 `feature-entrega1-MAQ` → `main`. Documentación completa del rediseño a plataforma SaaS:

@@ -12,8 +12,8 @@
 | Ollama (local) | Llama 3.1 8B | Motor del agente evaluador **dentro del producto** (no de desarrollo) |
 | faster-whisper | `medium` (es) | Transcripción dentro del producto |
 
-> Distinción importante: los prompts de las secciones 1–6 son **prompts de desarrollo**
-> (cómo se construyó el producto). La sección 7 recoge los **prompts de producto**: los que
+> Distinción importante: los prompts de las secciones 1–9 son **prompts de desarrollo**
+> (cómo se construyó el producto). La sección 10 recoge los **prompts de producto**: los que
 > el sistema envía al LLM en tiempo de ejecución.
 
 ---
@@ -253,9 +253,158 @@ sustentación.
 
 ---
 
-## 6. Testing y calidad
+## 6. Persistencia: Postgres y migraciones
 
-### Prompt 6.1 — Tests del aislamiento multi-tenant
+### Prompt 6.1 — Migración inicial del esquema
+
+```
+Genera la migración Alembic inicial para los modelos de app/models/. Es la primera
+migración de un sistema que sustituye persistencia en ficheros, así que no hay datos que
+preservar, pero sí quiero que `downgrade` deje la base exactamente como estaba: el CI va
+a ejecutar upgrade → downgrade → upgrade y tiene que pasar las tres veces.
+```
+
+**Cómo guié al asistente:** pedir la reversibilidad como requisito explícito, no como algo
+deseable. Una migración inicial que solo se prueba hacia adelante parece correcta hasta el día
+que hay que revertir un despliegue.
+
+**Ajuste humano:** el primer `downgrade` borraba las tablas pero no los tipos `ENUM`. Postgres
+no los elimina en cascada, así que el segundo `upgrade` falla al intentar crearlos de nuevo
+sobre un tipo que ya existe — justo el escenario que reproduce el paso de CI. Añadí el bucle
+`DROP TYPE IF EXISTS` sobre `TIPOS_ENUM` al final de `downgrade`.
+
+---
+
+### Prompt 6.2 — La regla que el ORM no puede expresar sola
+
+```
+RI-7 dice que un aprendiz tiene como máximo una sesión no abandonada por guía. No lo
+resuelvas en la capa de servicio con un SELECT previo: quiero la garantía en la base de
+datos, y que siga siendo cierta si dos peticiones entran a la vez.
+```
+
+**Cómo guié al asistente:** rechazar la comprobación en código. Un `SELECT` seguido de un
+`INSERT` no es atómico: con dos pestañas abiertas el aprendiz abre dos sesiones. La restricción
+tiene que vivir donde se serializan las escrituras.
+
+**Ajuste humano:** salió un índice único parcial
+(`postgresql_where=text("estado <> 'ABANDONADA'")`), que es lo correcto, pero SQLite no soporta
+esa sintaxis y la suite corre sobre SQLite. Acepté la limitación de forma consciente en lugar
+de degradar el esquema: `tests/conftest.py` omite ese índice mediante `@compiles`, y
+`test_modelos.py` verifica su existencia y su cláusula **sobre los metadatos**. La regla queda
+comprobada por inspección, no en ejecución — está anotado como deuda hasta que la suite corra
+contra Postgres.
+
+---
+
+## 7. Frontend
+
+### Prompt 7.1 — De HTML monolítico a SPA
+
+```
+Sustituye frontend/index.html (1400 líneas de HTML con JS embebido) por una SPA de React
+18 con TypeScript y Vite. Estructura por responsabilidad, nombres en español como en el
+backend, y rutas protegidas por rol: un aprendiz no debe poder ni renderizar las pantallas
+de docente. No borres el HTML actual.
+```
+
+**Cómo guié al asistente:** exigir la coherencia de nomenclatura con el backend
+(`componentes/`, `paginas/`, `contextos/`, `hooks/`). Un frontend en inglés sobre un dominio
+modelado en español obliga a traducir mentalmente en cada salto entre capas, y el dominio aquí
+—ficha, guía, sustentación, aprendiz— no tiene traducción natural.
+
+**Ajuste humano:** la última frase la añadí después de que el asistente propusiera eliminar el
+HTML de la v1. Se conservó en `frontend/legacy/`: es la referencia de lo que el sistema hacía
+antes y el origen de varias deudas documentadas en la sección 6 del README.
+
+---
+
+### Prompt 7.2 — El hook de la sala de sustentación
+
+```
+Encapsula la sala de sustentación en un hook: captura de micrófono con MediaRecorder,
+canal WebSocket y reproducción del audio del agente, con una máquina de estados explícita
+(escuchando / grabando / transcribiendo / pensando / finalizada). Mantén el modelo de
+turnos discretos con pulsar-para-hablar del ADR-004, no streaming continuo.
+```
+
+**Cómo guié al asistente:** proteger la decisión del ADR-004. La propuesta por defecto ante
+"conversación por voz" es streaming continuo con detección de silencios; en un aula con veinte
+aprendices hablando a la vez eso no funciona, y el pulsar-para-hablar ya estaba validado en la
+v1.
+
+**Ajuste humano:** dos correcciones sobre el primer borrador. La primera, el códec: fijaba
+`audio/webm`, que Safari no soporta — pasó a ser la lista de candidatos de `tipoSoportado()`
+comprobada con `MediaRecorder.isTypeSupported`. La segunda, el modo degradado: si el backend
+responde sin audio porque no hay motor TTS, el hook levanta `avisoSinAudio` y la sustentación
+continúa por texto, reflejando en la interfaz la decisión que ya se había tomado en el servidor.
+
+---
+
+### Prompt 7.3 — Cliente HTTP y sesión
+
+```
+Escribe el cliente de la API. Requisito no negociable: una sustentación dura más que el
+token de acceso. Ante un 401 debe refrescar y reintentar la petición original una sola vez,
+sin bucles. Los errores llegan como RFC 7807: expón un mensaje presentable al usuario.
+```
+
+**Cómo guié al asistente:** el requisito salió de cruzar dos números que ya estaban decididos y
+que nadie había puesto juntos: `MINUTOS_TOKEN_ACCESO=30` y una sustentación de unos 15 minutos
+más la preparación previa. Sin refresco transparente, a un aprendiz se le cae la sesión a mitad
+de la evaluación.
+
+**Ajuste humano:** la guarda `_reintentado` la pedí explícitamente tras ver que el primer
+borrador reintentaba desde el propio manejador del 401, con lo que un refresh token caducado
+producía recursión infinita. También cambié `AuthContext` para que al recargar la página valide
+el token contra `/auth/yo` en lugar de confiar en lo que haya en `localStorage`.
+
+---
+
+## 8. Integración continua y empaquetado
+
+### Prompt 8.1 — Pipeline de CI
+
+```
+Monta el CI en GitHub Actions con tres jobs: backend (lint, formato, migraciones, tests
+con cobertura), frontend (tipos, tests, build) y construcción de las imágenes Docker.
+El backend corre sobre ubuntu-latest, no sobre macOS.
+```
+
+**Cómo guié al asistente:** la última línea es el punto. El desarrollo es en macOS y la deuda D1
+era precisamente que el TTS solo funcionaba ahí, porque llamaba al comando `say`. Un CI en macOS
+habría pasado en verde con el sistema mudo en el único sistema operativo donde se va a
+desplegar. Ejecutarlo en Linux convierte la portabilidad (RNF-08) en algo que se verifica en
+cada push en vez de algo que se afirma en un documento.
+
+**Ajuste humano:** fijé `--cov-fail-under=70` como suelo, no como objetivo. Y añadí el paso que
+ejecuta `alembic upgrade head → downgrade base → upgrade head`, que es lo que destapó el
+problema de los tipos `ENUM` del prompt 6.1.
+
+---
+
+### Prompt 8.2 — Un test que vigila una decisión de arquitectura
+
+```
+Añade un paso de CI que falle si alguien introduce una llamada a una API de IA externa
+(OpenAI, Anthropic, Google) en backend/app/. No es un lint de estilo: es el ADR-001, que
+dice que ningún dato de aprendices sale de la institución.
+```
+
+**Cómo guié al asistente:** un ADR que solo vive en un Markdown se incumple en el primer sprint
+con prisa, y además de forma bienintencionada — "solo para probar, Ollama va lento". El grep
+sobre `app/` lo convierte en algo que rompe el build y obliga a discutirlo.
+
+**Ajuste humano:** mismo criterio en el job de Docker: no basta con que la imagen construya, así
+que el último paso comprueba que Piper y su fichero de voz quedaron realmente dentro
+(`command -v piper && ls /app/voces/`). El modo de fallo de T-012 no es que la imagen no
+compile, es que compile y el agente salga mudo.
+
+---
+
+## 9. Testing y calidad
+
+### Prompt 9.1 — Tests del aislamiento multi-tenant
 
 ```
 Escribe el test que garantiza el aislamiento entre instituciones. Debe ser parametrizado
@@ -269,12 +418,12 @@ dentro de tres semanas.
 
 ---
 
-## 7. Prompts del producto (tiempo de ejecución)
+## 10. Prompts del producto (tiempo de ejecución)
 
 Estos son los prompts que **el sistema envía al LLM local** durante una sustentación. Su
 evolución está documentada porque son parte del producto, no del proceso de desarrollo.
 
-### 7.1 — Prompt de sistema del agente evaluador
+### 10.1 — Prompt de sistema del agente evaluador
 
 ```
 Eres el evaluador virtual del SENA. Estás evaluando al aprendiz {nombre}.
@@ -313,7 +462,7 @@ REGLAS ABSOLUTAS:
 > Esta tabla es la **comparativa antes/después** más valiosa del proyecto: cada regla nació
 > de un fallo observado en una sustentación real, no de una intuición de diseño.
 
-### 7.2 — Prompt de calificación
+### 10.2 — Prompt de calificación
 
 ```
 Eres un evaluador del SENA. Analiza esta conversación de sustentación y asigna
@@ -336,7 +485,7 @@ distintas — inaceptable en evaluación académica.
 solo. Es exactamente la razón de [ADR-006](docs/04-arquitectura/adr/ADR-006-humano-en-el-bucle.md):
 la propuesta del agente nunca llega al aprendiz sin confirmación del instructor.
 
-### 7.3 — Prompt de cierre
+### 10.3 — Prompt de cierre
 
 ```
 El aprendiz ha respondido {n} preguntas. Cierra la evaluación de forma cordial:
@@ -353,7 +502,7 @@ una persona.
 
 ---
 
-## 8. Lo que la IA hizo mal
+## 11. Lo que la IA hizo mal
 
 > Sección incluida deliberadamente: un registro de uso de IA que solo cuenta los aciertos no
 > es un registro, es publicidad.
